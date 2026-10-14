@@ -12,11 +12,36 @@ const SUGGESTED_QUESTIONS = [
   "What is the refund process?",
 ];
 
-const BOT_AVATAR = (
-  <div className="flex-shrink-0 w-9 h-9 rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-white font-bold text-sm shadow-lg shadow-indigo-500/30">
-    S
-  </div>
-);
+function BotAvatar() {
+  return (
+    <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-200 text-xs font-semibold shadow-sm">
+      <svg
+        className="w-4 h-4 text-zinc-300"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.75"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M12 8V4H8" />
+        <rect width="16" height="12" x="4" y="8" rx="2" />
+        <path d="M2 14h2" />
+        <path d="M20 14h2" />
+        <path d="M9 13v2" />
+        <path d="M15 13v2" />
+      </svg>
+    </div>
+  );
+}
+
+function UserAvatar() {
+  return (
+    <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-zinc-100 text-zinc-950 font-semibold text-xs flex items-center justify-center shadow-sm">
+      U
+    </div>
+  );
+}
 
 function formatTime() {
   if (typeof window === "undefined") return "";
@@ -25,13 +50,13 @@ function formatTime() {
 
 function TypingIndicator() {
   return (
-    <div className="flex items-end gap-3 msg-animate">
-      {BOT_AVATAR}
-      <div className="bg-slate-800/80 border border-slate-700/50 backdrop-blur-sm rounded-2xl rounded-bl-sm px-5 py-4 shadow-lg">
+    <div className="flex items-start gap-3 msg-animate">
+      <BotAvatar />
+      <div className="bg-zinc-900 border border-zinc-800 rounded-2xl rounded-tl-sm px-4 py-3 shadow-sm">
         <div className="flex gap-1.5 items-center h-4">
-          <span className="w-2 h-2 rounded-full bg-indigo-400 dot-bounce" />
-          <span className="w-2 h-2 rounded-full bg-indigo-400 dot-bounce" />
-          <span className="w-2 h-2 rounded-full bg-indigo-400 dot-bounce" />
+          <span className="w-1.5 h-1.5 rounded-full bg-zinc-400 dot-bounce" />
+          <span className="w-1.5 h-1.5 rounded-full bg-zinc-400 dot-bounce" />
+          <span className="w-1.5 h-1.5 rounded-full bg-zinc-400 dot-bounce" />
         </div>
       </div>
     </div>
@@ -43,33 +68,28 @@ function Message({ msg }) {
   const isError = msg.isError;
 
   return (
-    <div className={`flex items-end gap-3 msg-animate ${isUser ? "flex-row-reverse" : "flex-row"}`}>
-      {!isUser && BOT_AVATAR}
-      <div className={`max-w-[85%] md:max-w-[75%] ${isUser ? "items-end" : "items-start"} flex flex-col gap-1`}>
+    <div className={`flex items-start gap-3 msg-animate ${isUser ? "flex-row-reverse" : "flex-row"}`}>
+      {isUser ? <UserAvatar /> : <BotAvatar />}
+      <div className={`max-w-[85%] md:max-w-[75%] ${isUser ? "items-end" : "items-start"} flex flex-col gap-1.5`}>
         <div
-          className={`px-4 py-3 rounded-2xl text-sm leading-relaxed shadow-lg ${
+          className={`px-4 py-3 rounded-2xl text-sm leading-relaxed ${
             isUser
-              ? "bg-gradient-to-br from-indigo-500 to-violet-600 text-white rounded-br-sm shadow-indigo-500/25 whitespace-pre-wrap break-words"
+              ? "bg-zinc-100 text-zinc-950 rounded-tr-sm whitespace-pre-wrap break-words shadow-sm font-normal"
               : isError
-              ? "bg-rose-950/40 border border-rose-500/30 backdrop-blur-sm text-rose-200 rounded-bl-sm break-words"
-              : "bg-slate-800/80 border border-slate-700/50 backdrop-blur-sm text-slate-200 rounded-bl-sm break-words"
+              ? "bg-zinc-900 border border-zinc-700 text-zinc-200 rounded-tl-sm break-words shadow-sm"
+              : "bg-zinc-900 border border-zinc-800 text-zinc-200 rounded-tl-sm break-words shadow-sm"
           }`}
         >
           {isUser ? (
             msg.content
           ) : (
-            <div className="markdown-content space-y-2 [&_p]:leading-relaxed [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:mt-1 [&_strong]:font-semibold [&_strong]:text-white [&_a]:text-indigo-400 [&_a]:underline [&_code]:bg-slate-900 [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:rounded [&_code]:text-xs [&_code]:text-indigo-300">
+            <div className="markdown-content space-y-2 [&_p]:leading-relaxed [&_p]:text-zinc-200 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:mt-1 [&_strong]:font-semibold [&_strong]:text-white [&_a]:text-zinc-100 [&_a]:underline [&_a]:underline-offset-4 hover:[&_a]:text-white [&_code]:bg-zinc-950 [&_code]:border [&_code]:border-zinc-800 [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:rounded [&_code]:text-xs [&_code]:font-mono [&_code]:text-zinc-200">
               <ReactMarkdown>{msg.content}</ReactMarkdown>
             </div>
           )}
         </div>
-        {msg.time && <span className="text-xs text-slate-500 px-1">{msg.time}</span>}
+        {msg.time && <span className="text-[11px] text-zinc-500 px-1 font-mono">{msg.time}</span>}
       </div>
-      {isUser && (
-        <div className="flex-shrink-0 w-9 h-9 rounded-full bg-gradient-to-br from-slate-600 to-slate-700 border border-slate-600 flex items-center justify-center text-white font-semibold text-sm shadow-md">
-          U
-        </div>
-      )}
     </div>
   );
 }
@@ -79,7 +99,8 @@ export default function ChatPage() {
     {
       id: 1,
       role: "bot",
-      content: "Hi! I'm ShopSphere's AI support assistant 👋\n\nAsk me anything about orders, returns, shipping, payments, and company policies.",
+      content:
+        "Welcome to ShopSphere Support. How can I assist you with your orders, returns, shipping, or store policies today?",
       time: "",
     },
   ]);
@@ -88,7 +109,6 @@ export default function ChatPage() {
   const bottomRef = useRef(null);
   const inputRef = useRef(null);
 
-  // Set time for initial message on client mount to avoid Next.js prerender hydration error
   useEffect(() => {
     setMessages((prev) =>
       prev.map((m) => (m.id === 1 && !m.time ? { ...m, time: formatTime() } : m))
@@ -104,7 +124,7 @@ export default function ChatPage() {
       {
         id: Date.now(),
         role: "bot",
-        content: "Chat cleared. How can I help you today?",
+        content: "Chat cleared. What can I help you with?",
         time: formatTime(),
       },
     ]);
@@ -149,7 +169,7 @@ export default function ChatPage() {
           id: Date.now() + 1,
           role: "bot",
           isError: true,
-          content: `⚠️ Could not reach support backend (${err.message}). Make sure the Spring Boot server is running on port 8080.`,
+          content: `Backend unavailable (${err.message}). Please verify the Spring Boot server is running on port 8080.`,
           time: formatTime(),
         },
       ]);
@@ -169,24 +189,24 @@ export default function ChatPage() {
   };
 
   return (
-    <div className="flex h-dvh bg-slate-950 text-slate-100 overflow-hidden">
+    <div className="flex h-dvh bg-zinc-950 text-zinc-100 overflow-hidden font-sans">
       {/* ── Sidebar ── */}
-      <aside className="hidden md:flex flex-col w-72 bg-slate-900/70 border-r border-slate-800/60 backdrop-blur-md p-6 gap-6">
-        {/* Logo */}
+      <aside className="hidden md:flex flex-col w-64 bg-zinc-950 border-r border-zinc-800 p-5 gap-5">
+        {/* Brand */}
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-white font-bold text-lg shadow-lg shadow-indigo-500/40">
+          <div className="w-8 h-8 rounded-lg bg-white text-zinc-950 flex items-center justify-center font-bold text-sm tracking-tight shadow-sm">
             S
           </div>
           <div>
-            <p className="font-semibold text-white text-sm leading-tight">ShopSphere</p>
-            <p className="text-xs text-indigo-400 font-medium">AI Support</p>
+            <p className="font-semibold text-white text-sm leading-tight tracking-tight">ShopSphere</p>
+            <p className="text-[11px] text-zinc-400">Support Assistant</p>
           </div>
         </div>
 
         {/* Action button */}
         <button
           onClick={clearChat}
-          className="flex items-center justify-center gap-2 w-full py-2 px-3 text-xs font-medium text-slate-300 bg-slate-800/60 hover:bg-slate-800 border border-slate-700/60 rounded-xl transition-all duration-200"
+          className="flex items-center justify-center gap-2 w-full py-2 px-3 text-xs font-medium text-zinc-300 bg-zinc-900 hover:bg-zinc-850 hover:text-white border border-zinc-800 rounded-lg transition-colors"
         >
           <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
@@ -194,20 +214,21 @@ export default function ChatPage() {
           New Conversation
         </button>
 
-        {/* Divider */}
-        <div className="h-px bg-slate-800" />
+        <div className="h-px bg-zinc-850" />
 
         {/* Suggested Questions */}
         <div className="flex-1 overflow-y-auto">
-          <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-3">Quick Questions</p>
-          <div className="flex flex-col gap-2">
+          <p className="text-[11px] font-medium text-zinc-400 uppercase tracking-wider mb-2.5 px-1">
+            Common Topics
+          </p>
+          <div className="flex flex-col gap-1.5">
             {SUGGESTED_QUESTIONS.map((q) => (
               <button
                 key={q}
                 id={`suggest-${q.slice(0, 20).replace(/\s+/g, "-").toLowerCase()}`}
                 onClick={() => sendMessage(q)}
                 disabled={loading}
-                className="text-left text-sm text-slate-400 hover:text-white hover:bg-slate-800/70 px-3 py-2.5 rounded-xl transition-all duration-200 border border-transparent hover:border-slate-700/60 disabled:opacity-40 disabled:cursor-not-allowed"
+                className="text-left text-xs text-zinc-400 hover:text-zinc-100 hover:bg-zinc-900 px-3 py-2 rounded-lg border border-transparent hover:border-zinc-800 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 {q}
               </button>
@@ -216,39 +237,35 @@ export default function ChatPage() {
         </div>
 
         {/* Footer */}
-        <div className="mt-auto">
-          <div className="bg-slate-800/50 border border-slate-700/40 rounded-xl p-3 text-xs text-slate-500 text-center">
-            Powered by Google Gemini &amp; Spring AI
-          </div>
+        <div className="mt-auto pt-3 border-t border-zinc-800/80 text-[11px] text-zinc-400 flex items-center justify-between">
+          <span>Enterprise RAG</span>
+          <span>v1.0</span>
         </div>
       </aside>
 
       {/* ── Main Chat ── */}
-      <div className="flex flex-col flex-1 min-w-0">
+      <div className="flex flex-col flex-1 min-w-0 bg-zinc-950">
         {/* Header */}
-        <header className="flex items-center justify-between px-6 py-4 border-b border-slate-800/60 bg-slate-900/50 backdrop-blur-md">
+        <header className="flex items-center justify-between px-6 py-3.5 border-b border-zinc-800 bg-zinc-950/80 backdrop-blur">
           <div className="flex items-center gap-3">
-            <div className="md:hidden w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-white font-bold text-base shadow-md">
+            <div className="md:hidden w-7 h-7 rounded-lg bg-white text-zinc-950 flex items-center justify-center font-bold text-xs">
               S
             </div>
             <div>
-              <h1 className="font-semibold text-white text-base">AI Customer Support</h1>
-              <div className="flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 pulse-glow" />
-                <span className="text-xs text-emerald-400 font-medium">Assistant Online</span>
+              <h1 className="font-semibold text-white text-sm tracking-tight">Customer Support</h1>
+              <div className="flex items-center gap-1.5 mt-0.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-zinc-400" />
+                <span className="text-[11px] text-zinc-400 font-medium">Online</span>
               </div>
             </div>
           </div>
           <div className="flex items-center gap-3">
             <button
               onClick={clearChat}
-              className="md:hidden text-xs text-slate-400 hover:text-white bg-slate-800/60 border border-slate-700/50 px-2.5 py-1.5 rounded-lg"
+              className="text-xs text-zinc-300 hover:text-white bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 px-2.5 py-1.5 rounded-lg transition-colors"
             >
               Clear
             </button>
-            <div className="text-xs text-slate-500 hidden sm:block">
-              Ask anything about your orders, returns &amp; policies
-            </div>
           </div>
         </header>
 
@@ -262,23 +279,23 @@ export default function ChatPage() {
         </main>
 
         {/* Input Bar */}
-        <div className="px-4 md:px-8 py-4 border-t border-slate-800/60 bg-slate-900/50 backdrop-blur-md">
+        <div className="px-4 md:px-8 py-4 border-t border-zinc-800 bg-zinc-950/90 backdrop-blur">
           {/* Mobile quick suggestions */}
-          <div className="flex md:hidden gap-2 overflow-x-auto pb-3 mb-3 scrollbar-none">
+          <div className="flex md:hidden gap-2 overflow-x-auto pb-2.5 mb-2.5">
             {SUGGESTED_QUESTIONS.slice(0, 3).map((q) => (
               <button
                 key={q}
                 onClick={() => sendMessage(q)}
                 disabled={loading}
-                className="flex-shrink-0 text-xs text-indigo-400 border border-indigo-500/30 bg-indigo-500/10 rounded-full px-3 py-1.5 hover:bg-indigo-500/20 transition-colors disabled:opacity-40"
+                className="flex-shrink-0 text-xs text-zinc-300 border border-zinc-800 bg-zinc-900 rounded-lg px-2.5 py-1 hover:text-white hover:bg-zinc-850 transition-colors disabled:opacity-40"
               >
                 {q}
               </button>
             ))}
           </div>
 
-          <div className="flex items-end gap-3">
-            <div className="flex-1 bg-slate-800/80 border border-slate-700/60 rounded-2xl px-4 py-3 focus-within:border-indigo-500/60 focus-within:ring-1 focus-within:ring-indigo-500/20 transition-all duration-200">
+          <div className="flex items-end gap-2.5 max-w-4xl mx-auto w-full">
+            <div className="flex-1 bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-2.5 focus-within:border-zinc-600 transition-colors">
               <textarea
                 ref={inputRef}
                 id="chat-input"
@@ -286,9 +303,9 @@ export default function ChatPage() {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="Type your message..."
+                placeholder="Ask about orders, returns, shipping..."
                 disabled={loading}
-                className="w-full bg-transparent text-sm text-slate-200 placeholder-slate-500 resize-none outline-none max-h-32 leading-relaxed disabled:opacity-50"
+                className="w-full bg-transparent text-sm text-zinc-100 placeholder-zinc-500 resize-none outline-none max-h-32 leading-relaxed disabled:opacity-50"
                 style={{ height: "auto" }}
                 onInput={(e) => {
                   e.target.style.height = "auto";
@@ -300,16 +317,17 @@ export default function ChatPage() {
               id="send-btn"
               onClick={() => sendMessage()}
               disabled={loading || !input.trim()}
-              className="flex-shrink-0 w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 hover:from-indigo-400 hover:to-violet-500 disabled:from-slate-700 disabled:to-slate-700 disabled:cursor-not-allowed text-white flex items-center justify-center shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/50 disabled:shadow-none transition-all duration-200 hover:scale-105 active:scale-95"
+              className="flex-shrink-0 w-10 h-10 rounded-xl bg-white text-zinc-950 hover:bg-zinc-200 disabled:bg-zinc-900 disabled:text-zinc-600 disabled:border disabled:border-zinc-800 disabled:cursor-not-allowed flex items-center justify-center transition-colors shadow-sm"
               aria-label="Send message"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 rotate-45">
-                <path d="M3.478 2.405a.75.75 0 00-.926.94l2.432 7.905H13.5a.75.75 0 010 1.5H4.984l-2.432 7.905a.75.75 0 00.926.94 60.519 60.519 0 0018.445-8.986.75.75 0 000-1.218A60.517 60.517 0 003.478 2.405z" />
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
+                <line x1="22" y1="2" x2="11" y2="13" />
+                <polygon points="22 2 15 22 11 13 2 9 22 2" />
               </svg>
             </button>
           </div>
-          <p className="text-center text-xs text-slate-600 mt-3">
-            Press <kbd className="bg-slate-800 px-1 rounded text-slate-400">Enter</kbd> to send · <kbd className="bg-slate-800 px-1 rounded text-slate-400">Shift+Enter</kbd> for new line
+          <p className="text-center text-[11px] text-zinc-400 mt-2.5">
+            Press <kbd className="bg-zinc-900 border border-zinc-800 px-1 py-0.5 rounded text-zinc-300 font-mono text-[10px]">Enter</kbd> to send · <kbd className="bg-zinc-900 border border-zinc-800 px-1 py-0.5 rounded text-zinc-300 font-mono text-[10px]">Shift+Enter</kbd> for new line
           </p>
         </div>
       </div>
