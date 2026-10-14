@@ -1,6 +1,8 @@
 package in.strikes.rag_ecommerce_support.service;
 
-import jakarta.annotation.PostConstruct;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.reader.pdf.PagePdfDocumentReader;
@@ -11,14 +13,14 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.List;
+import jakarta.annotation.PostConstruct;
 
 @Service
 public class ChatbotService {
 
     private final VectorStore vectorStore;
     private final ChatClient chatClient;
+    private final List<String> knowledgeBaseTexts = new ArrayList<>();
 
     @Value("classpath*:knowledge/*.pdf")
     private Resource[] policyFiles;
@@ -31,6 +33,8 @@ public class ChatbotService {
     @PostConstruct
     public void loadKnowledgeBase() {
         try {
+            knowledgeBaseTexts.clear();
+
             if (policyFiles == null || policyFiles.length == 0) {
                 System.out.println("No policy PDF files found under classpath:knowledge/*.pdf");
                 return;
@@ -58,6 +62,10 @@ public class ChatbotService {
                     for (Document chunk : chunks) {
                         chunk.getMetadata().put("category", category);
                         chunk.getMetadata().put("source", resource.getFilename());
+                        String chunkText = chunk.getText();
+                        if (chunkText != null && !chunkText.isBlank()) {
+                            knowledgeBaseTexts.add(chunkText);
+                        }
                     }
 
                     allChunks.addAll(chunks);
@@ -83,23 +91,19 @@ public class ChatbotService {
             List<Document> relevantChunks = vectorStore.similaritySearch(
                     SearchRequest.builder()
                             .query(question)
-                            .topK(4)
-                            .similarityThreshold(0.75)
+                            .topK(8)
+                            .similarityThreshold(0.2)
                             .build()
             );
 
-            // if (relevantChunks == null || relevantChunks.isEmpty()) {
-            //     return "No relevant information found in the knowledge base.";
-            // }
-
-            StringBuilder context = new StringBuilder();
-            for (Document document : relevantChunks) {
-                if (document != null && document.getText() != null) {
-                    context.append(document.getText()).append("\n\n");
-                }
+            String finalContext = buildContextFromDocuments(relevantChunks, question);
+            if (finalContext.isBlank()) {
+                finalContext = buildFallbackKnowledgeContext(question);
             }
 
-            String finalContext = context.toString();
+            if (finalContext.isBlank()) {
+                return "No relevant information found in the knowledge base.";
+            }
 
             String prompt = """
                     You are an AI customer support assistant for our e-commerce company.
@@ -120,11 +124,94 @@ public class ChatbotService {
                     .call()
                     .content();
 
-            return reply != null ? reply : "No relevant information found in the knowledge base.";
+            if (reply == null || reply.isBlank()) {
+                return "No relevant information found in the knowledge base.";
+            }
+
+            return reply;
         } catch (Exception e) {
             System.err.println("Error answering user query: " + e.getMessage());
             return "Sorry, I encountered an issue processing your request: " + e.getMessage();
         }
+    }
+
+    private String buildContextFromDocuments(List<Document> relevantChunks, String question) {
+        StringBuilder context = new StringBuilder();
+        if (relevantChunks == null) {
+            return "";
+        }
+
+        for (Document document : relevantChunks) {
+            if (document != null && document.getText() != null) {
+                String text = document.getText().trim();
+                if (!text.isEmpty() && isRelevantToQuestion(text, question)) {
+                    context.append(text).append("\n\n");
+                }
+            }
+        }
+
+        return context.toString().trim();
+    }
+
+    private String buildFallbackKnowledgeContext(String question) {
+        if (knowledgeBaseTexts.isEmpty()) {
+            return "";
+        }
+
+        String normalizedQuestion = normalizeForMatching(question);
+        StringBuilder context = new StringBuilder();
+
+        for (String knowledgeText : knowledgeBaseTexts) {
+            String normalizedKnowledge = normalizeForMatching(knowledgeText);
+            if (normalizedKnowledge.isEmpty()) {
+                continue;
+            }
+
+            if (normalizedKnowledge.contains(normalizedQuestion) || containsSharedKeyword(normalizedQuestion, normalizedKnowledge)) {
+                context.append(knowledgeText).append("\n\n");
+            }
+        }
+
+        return context.toString().trim();
+    }
+
+    private boolean isRelevantToQuestion(String text, String question) {
+        if (question == null || question.isBlank()) {
+            return true;
+        }
+
+        String normalizedText = normalizeForMatching(text);
+        String normalizedQuestion = normalizeForMatching(question);
+        return normalizedText.contains(normalizedQuestion)
+                || containsSharedKeyword(normalizedQuestion, normalizedText);
+    }
+
+    private boolean containsSharedKeyword(String question, String text) {
+        if (question == null || text == null || question.isBlank() || text.isBlank()) {
+            return false;
+        }
+
+        String[] questionWords = question.split("\\s+");
+        for (String word : questionWords) {
+            if (word.length() <= 2) {
+                continue;
+            }
+            if (text.contains(word)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private String normalizeForMatching(String value) {
+        if (value == null) {
+            return "";
+        }
+
+        return value.toLowerCase()
+                .replaceAll("[^a-z0-9\\s]", " ")
+                .replaceAll("\\s+", " ")
+                .trim();
     }
 
     private String handleConversationalQuery(String question) {
@@ -132,9 +219,8 @@ public class ChatbotService {
             return "Hello! How can I assist you with your ShopSphere orders, shipping, or policies today?";
         }
 
-        String clean = question.trim().toLowerCase().replaceAll("[^a-zA-Z0-9\\s]", " ").replaceAll("\\s+", " ").trim();
+        String clean = normalizeForMatching(question);
 
-        // Polite responses
         if (clean.matches("^(thanks|thank you|thank you so much|thanks a lot|thx|appreciate it)$")) {
             return "You're welcome! Let me know if you need help with anything else.";
         }
@@ -151,10 +237,14 @@ public class ChatbotService {
             return "I am ShopSphere's AI customer support assistant. You can ask me about returns, refunds, shipping times, order tracking, payment options, and store policies.";
         }
 
-        // Pure greetings
-        boolean startsWithGreeting = clean.matches("^(hi|hello|hey|hiya|howdy|hola|namaste|yo|greetings|good\\s*(morning|afternoon|evening|day))(\\s+.*)?$");
-        if (startsWithGreeting) {
-            boolean hasInquiryKeywords = clean.matches(".*\\b(return|refund|exchange|ship|shipping|delivery|deliver|track|tracking|order|orders|cancel|cancellation|payment|pay|paid|card|warranty|guarantee|policy|policies|fee|fees|cost|price|product|damaged|broken|international|address)\\b.*");
+        String greetingPattern = "^(hi|hello|hey|hiya|howdy|hola|namaste|yo|greetings|good morning|good afternoon|good evening|good day)(?:[!?.,\\s]+.*)?$";
+        if (clean.matches(greetingPattern)) {
+            String remainder = clean.replaceFirst("^(hi|hello|hey|hiya|howdy|hola|namaste|yo|greetings|good morning|good afternoon|good evening|good day)[!?.,\\s]*", "").trim();
+            if (remainder.isEmpty()) {
+                return "Hello! Welcome to ShopSphere Support. How can I assist you today with your orders, returns, shipping, or store policies?";
+            }
+
+            boolean hasInquiryKeywords = remainder.matches(".*\\b(return|refund|exchange|ship|shipping|delivery|deliver|track|tracking|order|orders|cancel|cancellation|payment|pay|paid|card|warranty|guarantee|policy|policies|fee|fees|cost|price|product|damaged|broken|international|address)\\b.*");
             if (!hasInquiryKeywords) {
                 return "Hello! Welcome to ShopSphere Support. How can I assist you today with your orders, returns, shipping, or store policies?";
             }
